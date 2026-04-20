@@ -1,0 +1,18 @@
+[project]
+name = "seo-metadata-pipeline"
+version = "0.1.0"
+description = "Batch pipeline that drafts SEO titles and meta descriptions with a local model, behind a human review gate"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=5.0",
+    "celery[redis]>=5.4",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["seopipe*", "metadata*"]
