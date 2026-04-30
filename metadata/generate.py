@@ -52,7 +52,8 @@ Reply as JSON with keys title, description, rationale."""
 
 
 def build_input(page: Page) -> str:
-    return (f"URL: {page.url}\nCurrent title: {page.title or '(none)'}\n"
+    return (f"URL: {page.url}\nProblems: {', '.join(page.reasons) or 'none'}\n"
+            f"Current title: {page.title or '(none)'}\n"
             f"Current description: {page.description or '(none)'}\nH1: {page.h1}\n"
             f"Content:\n{page.body}")
 

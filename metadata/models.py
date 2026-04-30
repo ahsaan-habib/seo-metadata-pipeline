@@ -20,6 +20,7 @@ class Page(models.Model):
     canonical = models.URLField(max_length=2000, blank=True)
     word_count = models.IntegerField(null=True)
     body = models.TextField(blank=True)
+    reasons = models.JSONField(default=list)          # why the filter sent it to the model
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["run", "url_hash"], name="page_once_per_run")]
