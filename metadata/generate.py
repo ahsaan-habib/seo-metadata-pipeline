@@ -51,11 +51,21 @@ SYSTEM = """You write SEO metadata for one web page.
 Reply as JSON with keys title, description, rationale."""
 
 
+def first_paragraph(body: str, words: int = 90) -> str:
+    para = next((p for p in body.split("\n\n") if len(p.split()) >= 12), body)
+    return " ".join(para.split()[:words])
+
+
 def build_input(page: Page) -> str:
+    """The smallest input that answers the question. Whole page bodies cost
+    far more tokens and didn't make the titles better: headings, the first
+    paragraph and the current metadata carry what a title needs."""
+    h2 = "; ".join(page.h2s[:3])
     return (f"URL: {page.url}\nProblems: {', '.join(page.reasons) or 'none'}\n"
             f"Current title: {page.title or '(none)'}\n"
-            f"Current description: {page.description or '(none)'}\nH1: {page.h1}\n"
-            f"Content:\n{page.body}")
+            f"Current description: {page.description or '(none)'}\n"
+            f"H1: {page.h1}\nH2: {h2}\n"
+            f"First paragraph: {first_paragraph(page.body)}")
 
 
 def _call(messages: list[dict]) -> tuple[str, int, int]:
