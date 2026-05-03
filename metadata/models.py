@@ -21,6 +21,7 @@ class Page(models.Model):
     word_count = models.IntegerField(null=True)
     body = models.TextField(blank=True)
     reasons = models.JSONField(default=list)          # why the filter sent it to the model
+    input_hash = models.CharField(max_length=40, blank=True, db_index=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["run", "url_hash"], name="page_once_per_run")]
@@ -39,4 +40,5 @@ class Draft(models.Model):
     status = models.CharField(max_length=20, default="pending")   # never "published"
     input_tokens = models.IntegerField(default=0)
     output_tokens = models.IntegerField(default=0)
+    input_hash = models.CharField(max_length=40, blank=True, db_index=True)
     created = models.DateTimeField(auto_now_add=True)
