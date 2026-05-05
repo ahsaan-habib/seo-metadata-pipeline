@@ -4,7 +4,11 @@ from django.db import models
 class Run(models.Model):
     name = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, default="running")   # running | done
+    status = models.CharField(max_length=20, default="running")   # running | stopped_budget | done
+    # A hard ceiling, not an alert. It exists because a crawl once wandered into
+    # a faceted-search URL space and found 90,000 pages.
+    budget_usd = models.DecimalField(max_digits=10, decimal_places=4, default=5)
+    spent_usd = models.DecimalField(max_digits=10, decimal_places=4, default=0)
 
 
 class Page(models.Model):
@@ -41,4 +45,5 @@ class Draft(models.Model):
     input_tokens = models.IntegerField(default=0)
     output_tokens = models.IntegerField(default=0)
     input_hash = models.CharField(max_length=40, blank=True, db_index=True)
+    cost_usd = models.DecimalField(max_digits=10, decimal_places=6, default=0)   # per row, not per run
     created = models.DateTimeField(auto_now_add=True)

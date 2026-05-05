@@ -7,13 +7,17 @@ from __future__ import annotations
 
 import hashlib
 import random
+import time
+from decimal import Decimal
 
 from celery import shared_task
 from django.db import IntegrityError
+from django.db.models import F
 
 from .generate import RateLimited, build_input, generate
 from .importer import url_hash
-from .models import Draft, Page
+from .costs import price
+from .models import Draft, Page, Run
 
 
 def backoff_with_jitter(retries: int, base: float = 10.0, cap: float = 300.0) -> float:
@@ -39,16 +43,24 @@ def draft_metadata(self, run_id: int, url: str) -> str:
             rationale=f"unchanged since run {previous.run_id}; reused", status=previous.status,
             input_hash=input_hash))
         return "unchanged"
+    run = Run.objects.get(id=run_id)
+    if run.status == "stopped_budget" or run.spent_usd >= run.budget_usd:
+        Run.objects.filter(id=run_id).update(status="stopped_budget")
+        return "budget"
+    t0 = time.perf_counter()
     try:
         result = generate(page)
     except RateLimited as e:
         raise self.retry(countdown=e.retry_after or backoff_with_jitter(self.request.retries))
+    cost = Decimal(str(price(time.perf_counter() - t0, result.input_tokens, result.output_tokens)))
+    Run.objects.filter(id=run_id).update(spent_usd=F("spent_usd") + cost)
     try:
         Draft.objects.create(
             key=key, run_id=run_id, page=page, url=url,
             title=result.title, description=result.description, rationale=result.rationale,
             status="pending", input_hash=input_hash,
             input_tokens=result.input_tokens, output_tokens=result.output_tokens,
+            cost_usd=cost,
         )
     except IntegrityError:      # lost a race with a duplicate job: the index decided
         return "exists"
