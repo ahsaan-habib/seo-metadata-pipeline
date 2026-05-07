@@ -14,9 +14,9 @@ from celery import shared_task
 from django.db import IntegrityError
 from django.db.models import F
 
-from .generate import RateLimited, build_input, generate
-from .importer import url_hash
 from .costs import price
+from .generate import InvalidOutput, RateLimited, build_input, generate
+from .importer import url_hash
 from .models import Draft, Page, Run
 
 
@@ -52,6 +52,13 @@ def draft_metadata(self, run_id: int, url: str) -> str:
         result = generate(page)
     except RateLimited as e:
         raise self.retry(countdown=e.retry_after or backoff_with_jitter(self.request.retries))
+    except InvalidOutput as e:
+        # invalid twice: a visible failed row for the reviewer, not a line in a worker log
+        Draft.objects.get_or_create(key=key, defaults=dict(
+            run_id=run_id, page=page, url=url, title=page.title, description=page.description,
+            rationale=f"model output failed validation twice: {str(e)[:300]}", status="failed",
+            input_hash=input_hash))
+        return "failed"
     cost = Decimal(str(price(time.perf_counter() - t0, result.input_tokens, result.output_tokens)))
     Run.objects.filter(id=run_id).update(spent_usd=F("spent_usd") + cost)
     try:
