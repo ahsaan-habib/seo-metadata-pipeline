@@ -46,4 +46,6 @@ class Draft(models.Model):
     output_tokens = models.IntegerField(default=0)
     input_hash = models.CharField(max_length=40, blank=True, db_index=True)
     cost_usd = models.DecimalField(max_digits=10, decimal_places=6, default=0)   # per row, not per run
+    reviewed_by = models.CharField(max_length=150, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)

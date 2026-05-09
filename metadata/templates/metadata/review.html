@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Review · run {{ run.id }}</title>
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 20px; color: #1d2433; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border-bottom: 1px solid #e3e7ee; padding: 6px; vertical-align: top; text-align: left; }
+  tr.cur { background: #f2f6ff; }
+  del { background: #fde2e2; text-decoration: line-through; }
+  ins { background: #dcf5e3; text-decoration: none; }
+  input[type=text] { width: 100%; font: inherit; }
+  .why { color: #5b6476; font-size: 12px; }
+  .failed { color: #b4232a; }
+  .bar { position: sticky; top: 0; background: #fff; padding: 8px 0; }
+</style>
+<h2>Run {{ run.id }} · {{ run.name }}</h2>
+<p>pending {{ counts.pending }} · failed {{ counts.failed }} · approved {{ counts.approved }} · rejected {{ counts.rejected }}
+ · spent ${{ run.spent_usd }} of ${{ run.budget_usd }} ({{ run.status }})</p>
+<form method="post">{% csrf_token %}
+<div class="bar">
+  <button name="action" value="approve">Approve selected (a)</button>
+  <button name="action" value="reject">Reject selected (r)</button>
+  <span class="why">j/k move · x select · e edit title · a approve · r reject</span>
+</div>
+<table>
+  <tr><th></th><th>Page</th><th>Title (old → new)</th><th>Description (old → new)</th></tr>
+  {% for r in rows %}
+  <tr data-id="{{ r.d.id }}">
+    <td><input type="checkbox" name="ids" value="{{ r.d.id }}"></td>
+    <td><a href="{{ r.d.url }}" target="_blank" rel="noopener">{{ r.d.url|truncatechars:60 }}</a>
+      <div class="why {% if r.d.status == 'failed' %}failed{% endif %}">{{ r.d.rationale }}</div>
+      <div class="why">{{ r.d.page.reasons|join:", " }}</div></td>
+    <td>{{ r.title_diff }}<input type="text" name="title_{{ r.d.id }}" value="{{ r.d.title }}" maxlength="70"></td>
+    <td>{{ r.desc_diff }}<input type="text" name="desc_{{ r.d.id }}" value="{{ r.d.description }}" maxlength="170"></td>
+  </tr>
+  {% endfor %}
+</table>
+</form>
+<script>
+const rows = [...document.querySelectorAll("tr[data-id]")]; let i = 0;
+const mark = () => rows.forEach((r, k) => r.classList.toggle("cur", k === i));
+const submit = (action) => { const b = document.querySelector(`button[value=${action}]`); b.click(); };
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" && e.target.type === "text") { if (e.key === "Escape") e.target.blur(); return; }
+  if (!rows.length) return;
+  if (e.key === "j") i = Math.min(i + 1, rows.length - 1);
+  else if (e.key === "k") i = Math.max(i - 1, 0);
+  else if (e.key === "x") { const c = rows[i].querySelector("input[type=checkbox]"); c.checked = !c.checked; }
+  else if (e.key === "e") { e.preventDefault(); rows[i].querySelector("input[type=text]").focus(); }
+  else if (e.key === "a") submit("approve");
+  else if (e.key === "r") submit("reject");
+  else return;
+  mark(); rows[i].scrollIntoView({ block: "nearest" });
+});
+mark();
+</script>
