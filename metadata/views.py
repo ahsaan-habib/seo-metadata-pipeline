@@ -10,6 +10,7 @@ from __future__ import annotations
 import difflib
 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import escape
@@ -51,7 +52,10 @@ def review(request, run_id: int):
             d.save()
         return redirect("review", run_id=run.id)
 
-    drafts = Draft.objects.filter(run=run, status__in=["pending", "failed"]).select_related("page")[:200]
+    # failed first, then least confident first: uncertain drafts get reviewed
+    # while attention is highest
+    drafts = (Draft.objects.filter(run=run, status__in=["pending", "failed"]).select_related("page")
+              .order_by("-status", F("confidence").asc(nulls_first=True), "id")[:200])
     rows = [{"d": d, "title_diff": diff(d.page.title, d.title),
              "desc_diff": diff(d.page.description, d.description)} for d in drafts]
     counts = {s: Draft.objects.filter(run=run, status=s).count()

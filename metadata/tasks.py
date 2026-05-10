@@ -65,7 +65,7 @@ def draft_metadata(self, run_id: int, url: str) -> str:
         Draft.objects.create(
             key=key, run_id=run_id, page=page, url=url,
             title=result.title, description=result.description, rationale=result.rationale,
-            status="pending", input_hash=input_hash,
+            confidence=result.confidence, status="pending", input_hash=input_hash,
             input_tokens=result.input_tokens, output_tokens=result.output_tokens,
             cost_usd=cost,
         )

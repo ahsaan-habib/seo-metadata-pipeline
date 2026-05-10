@@ -41,6 +41,10 @@ class Draft(models.Model):
     title = models.TextField()
     description = models.TextField()
     rationale = models.TextField(blank=True)          # why, for the reviewer
+    # Used ONLY to order the review queue (least sure first, while attention is
+    # highest). Never to auto-approve: a model's stated confidence is not a
+    # calibrated probability, and it's most confident on fluent, wrong output.
+    confidence = models.FloatField(null=True)
     status = models.CharField(max_length=20, default="pending")   # never "published"
     input_tokens = models.IntegerField(default=0)
     output_tokens = models.IntegerField(default=0)

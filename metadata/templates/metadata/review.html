@@ -29,7 +29,7 @@
     <td><input type="checkbox" name="ids" value="{{ r.d.id }}"></td>
     <td><a href="{{ r.d.url }}" target="_blank" rel="noopener">{{ r.d.url|truncatechars:60 }}</a>
       <div class="why {% if r.d.status == 'failed' %}failed{% endif %}">{{ r.d.rationale }}</div>
-      <div class="why">{{ r.d.page.reasons|join:", " }}</div></td>
+      <div class="why">{{ r.d.page.reasons|join:", " }}{% if r.d.confidence is not None %} · confidence {{ r.d.confidence|floatformat:2 }}{% endif %}</div></td>
     <td>{{ r.title_diff }}<input type="text" name="title_{{ r.d.id }}" value="{{ r.d.title }}" maxlength="70"></td>
     <td>{{ r.desc_diff }}<input type="text" name="desc_{{ r.d.id }}" value="{{ r.d.description }}" maxlength="170"></td>
   </tr>

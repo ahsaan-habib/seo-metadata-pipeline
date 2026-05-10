@@ -20,6 +20,7 @@ class Metadata(BaseModel):
     title: str = Field(min_length=20, max_length=60)
     description: str = Field(min_length=70, max_length=160)
     rationale: str = Field(max_length=200, description="one line: what was wrong and what changed")
+    confidence: float = Field(ge=0, le=1, description="how sure you are the page content supports this")
 
 
 @dataclass
@@ -27,6 +28,7 @@ class Result:
     title: str
     description: str
     rationale: str
+    confidence: float
     input_tokens: int
     output_tokens: int
 
@@ -47,8 +49,10 @@ SYSTEM = """You write SEO metadata for one web page.
 - Only state facts present in the page content. Never invent prices, specs,
   offers, locations or claims.
 - rationale: one line for the human reviewer: what was wrong with the current
-  metadata and what you changed.
-Reply as JSON with keys title, description, rationale."""
+  metadata and what you changed, e.g. "Duplicate of 43 other titles; now uses
+  the product's model number." The reviewer checks this claim.
+- confidence: 0-1, lower when the page content was thin or ambiguous.
+Reply as JSON with keys title, description, rationale, confidence."""
 
 
 def first_paragraph(body: str, words: int = 90) -> str:
@@ -88,7 +92,7 @@ def generate(page: Page) -> Result:
         tin, tout = tin + i, tout + o
         try:
             m = Metadata.model_validate_json(raw)
-            return Result(m.title, m.description, m.rationale, tin, tout)
+            return Result(m.title, m.description, m.rationale, m.confidence, tin, tout)
         except ValidationError as e:
             if attempt == 1:
                 raise InvalidOutput(str(e)) from e
