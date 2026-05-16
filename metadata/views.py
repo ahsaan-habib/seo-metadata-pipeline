@@ -55,7 +55,7 @@ def review(request, run_id: int):
     # failed first, then least confident first: uncertain drafts get reviewed
     # while attention is highest
     drafts = (Draft.objects.filter(run=run, status__in=["pending", "failed"]).select_related("page")
-              .order_by("-status", F("confidence").asc(nulls_first=True), "id")[:200])
+              .order_by("status", F("confidence").asc(nulls_first=True), "id")[:200])  # "failed" < "pending"
     rows = [{"d": d, "title_diff": diff(d.page.title, d.title),
              "desc_diff": diff(d.page.description, d.description)} for d in drafts]
     counts = {s: Draft.objects.filter(run=run, status=s).count()
