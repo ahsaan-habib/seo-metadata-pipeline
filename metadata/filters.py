@@ -6,6 +6,8 @@ call is the one you don't make.
 """
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 from django.db.models import Count
 
 from .models import Page
@@ -32,14 +34,30 @@ def reasons(page: Page, dup_titles: set[str], dup_descs: set[str]) -> list[str]:
     return out
 
 
+def canonical_elsewhere(page: Page) -> bool:
+    return bool(page.canonical) and page.canonical.rstrip("/") != page.url.rstrip("/")
+
+
+def parameterised(url: str) -> bool:
+    # faceted search / sort / tracking variants: ?colour=red&size=9&sort=price ...
+    return bool(urlsplit(url).query)
+
+
 def candidates(run_id: int):
-    """Indexable 200 pages whose metadata has a problem, with the problem attached."""
+    """Indexable 200 pages whose metadata has a problem, with the problem attached.
+
+    Parameterised URLs and pages canonicalised to another URL are skipped:
+    their metadata is the canonical page's problem. This is what turned a crawl
+    that wandered into faceted search (90,000 "pages") back into a normal run.
+    """
     base = Page.objects.filter(run_id=run_id, status_code=200, indexable=True)
     dup_titles = set(base.exclude(title="").values("title").annotate(n=Count("id"))
                      .filter(n__gt=1).values_list("title", flat=True))
     dup_descs = set(base.exclude(description="").values("description").annotate(n=Count("id"))
                     .filter(n__gt=1).values_list("description", flat=True))
     for page in base.iterator():
+        if parameterised(page.url) or canonical_elsewhere(page):
+            continue
         why = reasons(page, dup_titles, dup_descs)
         if why:
             yield page, why
