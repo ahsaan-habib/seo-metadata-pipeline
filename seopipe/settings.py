@@ -44,4 +44,4 @@ CELERY_TASK_ACKS_LATE = True            # a worker crash re-delivers the page, i
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3:4b")
+LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3:4b-instruct")

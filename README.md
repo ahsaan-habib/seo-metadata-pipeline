@@ -1,7 +1,7 @@
 # seo-metadata-pipeline
 
 Drafts SEO titles and meta descriptions for a large site from a crawl export,
-using a local model (`qwen3:4b` via Ollama), and puts every draft in front of
+using a local model (`qwen3:4b-instruct` via Ollama), and puts every draft in front of
 a person before anything ships.
 
 Connecting a model to a real backend is mostly not a modelling problem. It's
@@ -61,7 +61,7 @@ across hundreds of pages is a different category of problem. So:
 ## Run it
 
 ```bash
-ollama pull qwen3:4b
+ollama pull qwen3:4b-instruct   # not plain qwen3:4b: that tag is now a thinking-only build
 docker compose up -d redis
 make install && source .venv/bin/activate
 make migrate && python manage.py createsuperuser
