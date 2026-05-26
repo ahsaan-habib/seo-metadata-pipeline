@@ -17,7 +17,8 @@ from .models import Page
 
 
 class Metadata(BaseModel):
-    title: str = Field(min_length=20, max_length=60)
+    # same bounds as filters.TITLE_LEN, or an accepted draft gets flagged again next run
+    title: str = Field(min_length=30, max_length=60)
     description: str = Field(min_length=70, max_length=160)
     rationale: str = Field(max_length=200, description="one line: what was wrong and what changed")
     confidence: float = Field(ge=0, le=1, description="how sure you are the page content supports this")
@@ -44,7 +45,7 @@ class InvalidOutput(Exception):
 
 
 SYSTEM = """You write SEO metadata for one web page.
-- title: 20-60 characters, specific to this page, no site name, no clickbait.
+- title: 30-60 characters, specific to this page, no site name, no clickbait.
 - description: 70-160 characters, says what the page offers, plain language.
 - Only state facts present in the page content. Never invent prices, specs,
   offers, locations or claims.
